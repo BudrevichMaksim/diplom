@@ -33,11 +33,11 @@ async def command_start_handler(message: Message) -> None:
     await message.answer(START_MESSAGE)
 
 @dp.message(F.voice, F.voice.duration > MAX_VOICE_DURATION)
-async def error_voice_too_long_handler(message: Message, bot: Bot):
+async def error_voice_too_long_handler(message: Message):
     await message.answer(ERROR_TOO_LONG)
 
 @dp.message(F.voice, F.voice.duration < MIN_VOICE_DURATION)
-async def error_voice_too_short_handler(message: Message, bot: Bot):
+async def error_voice_too_short_handler(message: Message):
     await message.answer(ERROR_TOO_SHORT)
 
 @dp.message(F.voice)
