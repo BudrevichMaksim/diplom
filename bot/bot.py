@@ -56,11 +56,11 @@ async def voice_message_handler(message: Message, bot: Bot):
     This handler recieves voice message
     """
     
-    file_path = await download_audio(message, bot)
+    file_path: Path = await download_audio(message, bot)
 
     await message.reply(REPLY_TO_VOICE)
 
-    prediction = await get_prediction(str(file_path))
+    prediction = await get_prediction(file_path)
 
     await message.answer(REPLY_PREDICTION.substitute(
         pred=prediction["prediction"], 
@@ -86,7 +86,7 @@ async def download_audio(message: Message, bot: Bot) -> Path:
 
     return file_path
 
-async def get_prediction(file_path: str):
+async def get_prediction(file_path: Path):
     async with httpx.AsyncClient() as client:
         with open(file_path, "rb") as audio_file:
             response = await client.post(
