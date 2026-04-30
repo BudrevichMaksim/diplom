@@ -55,14 +55,8 @@ async def voice_message_handler(message: Message, bot: Bot):
     """
     This handler recieves voice message
     """
-    assert message.voice is not None
     
-    destination_dir = Path("downloads/voices")
-    destination_dir.mkdir(parents=True, exist_ok=True) 
-    
-    file_path = destination_dir / f"{message.voice.file_id}.ogg"
-    
-    await bot.download(message.voice, destination=file_path)
+    file_path = await download_audio(message, bot)
 
     await message.reply(REPLY_TO_VOICE)
 
@@ -76,6 +70,21 @@ async def voice_message_handler(message: Message, bot: Bot):
 @dp.message()
 async def default_handler(message: Message):
     await message.answer(DEFAULT_ANSWER)
+
+
+async def download_audio(message: Message, bot: Bot) -> Path:
+    """
+        This function downloads voice message
+    """
+    assert message.voice is not None
+    destination_dir = Path("downloads/voices")
+    destination_dir.mkdir(parents=True, exist_ok=True) 
+    
+    file_path = destination_dir / f"{message.voice.file_id}.ogg"
+    
+    await bot.download(message.voice, destination=file_path)
+
+    return file_path
 
 async def get_prediction(file_path: str):
     async with httpx.AsyncClient() as client:
