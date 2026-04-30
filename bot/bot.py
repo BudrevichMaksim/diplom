@@ -12,8 +12,15 @@ from aiogram.types import Message, ContentType
 
 
 TOKEN: str = str(getenv("BOT_TOKEN"))
-START_MESSAGE: str = "Я создан помочь понять, общается ли с тобой реальный человек, перешли голосовое и я отвечу в ближайшее время!"
+MAX_VOICE_DURATION: int = 10
+MIN_VOICE_DURATION: int = 2
+START_MESSAGE: str = f"Я создан помочь понять, общается ли с тобой реальный человек, перешли голосовое от {MIN_VOICE_DURATION} до {MAX_VOICE_DURATION} секунд и я отвечу в ближайшее время!"
 REPLY_TO_VOICE: str = "Сообщение отправлено на анализ, ожидайте..."
+DEFAULT_ANSWER: str = "Это сообщение не подходит.\nДля проверки мне нужно голосовое."
+
+ERROR_TOO_LONG: str = f"Сообщение должно быть короче {MAX_VOICE_DURATION} секунд."
+ERROR_TOO_SHORT: str = f"Сообщение должно быть длиннее {MIN_VOICE_DURATION} секунд."
+
 
 dp = Dispatcher()
 
@@ -25,6 +32,13 @@ async def command_start_handler(message: Message) -> None:
     """
     await message.answer(START_MESSAGE)
 
+@dp.message(F.voice, F.voice.duration > MAX_VOICE_DURATION)
+async def error_voice_too_long_handler(message: Message, bot: Bot):
+    await message.answer(ERROR_TOO_LONG)
+
+@dp.message(F.voice, F.voice.duration < MIN_VOICE_DURATION)
+async def error_voice_too_short_handler(message: Message, bot: Bot):
+    await message.answer(ERROR_TOO_SHORT)
 
 @dp.message(F.voice)
 async def voice_message_handler(message: Message, bot: Bot):
@@ -32,7 +46,7 @@ async def voice_message_handler(message: Message, bot: Bot):
     This handler recieves voice message
     """
     assert message.voice is not None
-
+    
     destination_dir = Path("downloads/voices")
     destination_dir.mkdir(parents=True, exist_ok=True) 
     
@@ -42,6 +56,9 @@ async def voice_message_handler(message: Message, bot: Bot):
 
     await message.reply(REPLY_TO_VOICE)
 
+@dp.message()
+async def default_handler(message: Message):
+    await message.answer(DEFAULT_ANSWER)
 
 async def main() -> None:
     # Initialize Bot instance with default bot properties which will be passed to all API calls
