@@ -30,7 +30,9 @@ REPLY_PREDICTION = Template(
 
 ERROR_TOO_LONG: str = f"Сообщение должно быть короче {MAX_VOICE_DURATION} секунд."
 ERROR_TOO_SHORT: str = f"Сообщение должно быть длиннее {MIN_VOICE_DURATION} секунд."
+ERROR_SENDING_BLOCKED = "Сообщение уже в обработке."
 
+user_locks = {}
 
 dp = Dispatcher()
 
@@ -55,17 +57,28 @@ async def voice_message_handler(message: Message, bot: Bot):
     """
     This handler recieves voice message
     """
+    assert message.from_user is not None
+
+    user_id: int = message.from_user.id
     
-    file_path: Path = await download_audio(message, bot)
+    lock = get_lock(user_id)
 
-    await message.reply(REPLY_TO_VOICE)
+    if lock.locked():
+        await message.reply(ERROR_SENDING_BLOCKED)
+        return
+    
+    async with lock:
 
-    prediction = await get_prediction(file_path)
+        file_path: Path = await download_audio(message, bot)
+        await message.reply(REPLY_TO_VOICE)
 
-    await message.answer(REPLY_PREDICTION.substitute(
-        pred=prediction["prediction"], 
-        conf=prediction["confidence"]
-        ))
+        prediction = await get_prediction(file_path)
+        await message.reply(
+            REPLY_PREDICTION.substitute(
+                pred=prediction["prediction"], 
+                conf=prediction["confidence"]
+            )
+        )
 
 @dp.message()
 async def default_handler(message: Message):
@@ -97,6 +110,13 @@ async def get_prediction(file_path: Path):
         response.raise_for_status()
     
     return response.json()
+
+
+def get_lock(user_id: int):
+    if user_id not in user_locks:
+        user_locks[user_id] = asyncio.Lock()
+    return user_locks[user_id]
+
 
 async def main() -> None:
     # Initialize Bot instance with default bot properties which will be passed to all API calls
