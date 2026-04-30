@@ -3,6 +3,8 @@ import logging
 import sys
 from os import getenv
 from pathlib import Path
+import httpx
+from string import Template
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
@@ -12,11 +14,19 @@ from aiogram.types import Message, ContentType
 
 
 TOKEN: str = str(getenv("BOT_TOKEN"))
+API_PATH: str = str(getenv("API_PATH"))
+
 MAX_VOICE_DURATION: int = 10
 MIN_VOICE_DURATION: int = 2
+
 START_MESSAGE: str = f"Я создан помочь понять, общается ли с тобой реальный человек, перешли голосовое от {MIN_VOICE_DURATION} до {MAX_VOICE_DURATION} секунд и я отвечу в ближайшее время!"
 REPLY_TO_VOICE: str = "Сообщение отправлено на анализ, ожидайте..."
 DEFAULT_ANSWER: str = "Это сообщение не подходит.\nДля проверки мне нужно голосовое."
+
+REPLY_PREDICTION = Template(
+    "Результат анализа: $pred, с увереностью: $conf"
+)
+
 
 ERROR_TOO_LONG: str = f"Сообщение должно быть короче {MAX_VOICE_DURATION} секунд."
 ERROR_TOO_SHORT: str = f"Сообщение должно быть длиннее {MIN_VOICE_DURATION} секунд."
@@ -56,9 +66,28 @@ async def voice_message_handler(message: Message, bot: Bot):
 
     await message.reply(REPLY_TO_VOICE)
 
+    prediction = await get_prediction(str(file_path))
+
+    await message.answer(REPLY_PREDICTION.substitute(
+        pred=prediction["prediction"], 
+        conf=prediction["confidence"]
+        ))
+
 @dp.message()
 async def default_handler(message: Message):
     await message.answer(DEFAULT_ANSWER)
+
+async def get_prediction(file_path: str):
+    async with httpx.AsyncClient() as client:
+        with open(file_path, "rb") as audio_file:
+            response = await client.post(
+                f"{API_PATH}/predict",
+                files={"file": audio_file}
+            )
+
+        response.raise_for_status()
+    
+    return response.json()
 
 async def main() -> None:
     # Initialize Bot instance with default bot properties which will be passed to all API calls
