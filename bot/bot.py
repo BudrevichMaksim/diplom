@@ -100,7 +100,7 @@ async def download_audio(message: Message, bot: Bot) -> Path:
     return file_path
 
 async def get_prediction(file_path: Path):
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         with open(file_path, "rb") as audio_file:
             response = await client.post(
                 f"{API_PATH}/predict",
