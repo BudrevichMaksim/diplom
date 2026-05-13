@@ -221,3 +221,17 @@ __marimo__/
 
 # Temporary data directory
 temp
+data
+
+# Visual Studio Code files
+.vscode/
+
+# MLFlow and Lightning files
+1
+mlartifacts
+mlflow*
+mlruns
+lightning_logs
+
+# Models data
+weights
