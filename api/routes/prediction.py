@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, File, UploadFile
 
-from api.schemas.response import PredictionResponse
+from shared.schemas.response import PredictionResponse
 from api.services.inference_service import predict_audio
 from api.dependencies.detectors import get_detector
 from api.models.base import BaseDetector
