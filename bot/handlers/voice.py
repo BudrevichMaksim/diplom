@@ -66,7 +66,7 @@ def create_voice_router(prediction_service, file_service, lock_service, settings
         async with lock:
             try:
                 # 1. Download the voice message from Telegram's servers
-                file_path = await file_service.download_audio(message.voice, bot)
+                file_path = await file_service.download_voice(message.voice, bot)
 
                 # 2. Notify user that processing has initiated
                 await message.answer(i18n.get("reply-to-voice"))
