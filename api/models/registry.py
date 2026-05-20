@@ -49,7 +49,6 @@ def load_detector():
 
     if not checkpoint_path.is_file():
         raise FileNotFoundError(f"Checkpoint file not found at: {checkpoint_path}")
-
     model_class = MODELS_MAP[settings.DETECTOR]
     print(f"Initializing detector: {model_class.__name__}")
 
