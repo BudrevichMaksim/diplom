@@ -50,7 +50,6 @@ async def predict_audio(file: UploadFile, detector: BaseDetector):
         features = extractor.extract(wav_path)
 
     # Step 3: Run Inference
-    # The threshold is set to 0.7 to reduce False Positives for 'fake' classification
-    inference = detector.predict(features, threshold=0.7)
+    inference = detector.predict(features)
 
     return inference
